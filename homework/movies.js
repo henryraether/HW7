@@ -1,19 +1,39 @@
-window.addEventListener('DOMContentLoaded', async function(event) {
-  let db = firebase.firestore()
+firebase.auth().onAuthStateChanged(async function(user) {
+  if (user) {
+    // signed in
+    console.log(`signed in as ${user.displayName}`)
+    console.log(user)
+    let db = firebase.firestore()
+    db.collection('users').doc(user.uid).set({
+      name: user.displayName,
+      email: user.email
+    })
+     // Sign-out button
+     document.querySelector('.sign-in-or-sign-out').innerHTML = `
+     ${user.displayName} <button class="text-pink-500 underline sign-out"> Sign Out</button>
+   `
+   document.querySelector('.sign-out').addEventListener('click', function(event) {
+     console.log('sign out clicked')
+     firebase.auth().signOut()
+     document.location.href = 'movies.html'
+   })
+  
   let apiKey = 'your TMDB API key'
-  let response = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=en-US`)
+  let response = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=11b396b295f274c757445c46848480c6&language=en-US`)
   let json = await response.json()
   let movies = json.results
   console.log(movies)
   
   for (let i=0; i<movies.length; i++) {
+    let db = firebase.firestore()
     let movie = movies[i]
-    let docRef = await db.collection('watched').doc(`${movie.id}`).get()
+    let docRef = await db.collection('watched').doc(`${movie.id}-${user.uid}`).get()
     let watchedMovie = docRef.data()
     let opacityClass = ''
     if (watchedMovie) {
       opacityClass = 'opacity-20'
     }
+   
 
     document.querySelector('.movies').insertAdjacentHTML('beforeend', `
       <div class="w-1/5 p-4 movie-${movie.id} ${opacityClass}">
@@ -26,8 +46,20 @@ window.addEventListener('DOMContentLoaded', async function(event) {
       event.preventDefault()
       let movieElement = document.querySelector(`.movie-${movie.id}`)
       movieElement.classList.add('opacity-20')
-      await db.collection('watched').doc(`${movie.id}`).set({})
+      await db.collection('watched').doc(`${movie.id}-${user.uid}`).set({})
     }) 
+  } 
+  } else {
+    console.log('signed out')
+
+    let ui = new firebaseui.auth.AuthUI(firebase.auth())
+    let authUIConfig = {
+      signInOptions: [
+        firebase.auth.EmailAuthProvider.PROVIDER_ID
+      ],
+      signInSuccessUrl: 'movies.html'
+    }
+    ui.start('.sign-in-or-sign-out', authUIConfig)
   }
 })
 
