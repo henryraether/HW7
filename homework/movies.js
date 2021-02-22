@@ -9,7 +9,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
       email: user.email
     })
      // Sign-out button
-     document.querySelector('.sign-in-or-sign-out').innerHTML = `
+     document.querySelector('.sign-in-or-sign-out').innerHTML = `Signed in as:
      ${user.displayName} <button class="text-pink-500 underline sign-out"> Sign Out</button>
    `
    document.querySelector('.sign-out').addEventListener('click', function(event) {
@@ -50,6 +50,9 @@ firebase.auth().onAuthStateChanged(async function(user) {
     }) 
   } 
   } else {
+    document.querySelector('.sign-in-or-sign-out').innerHTML = `
+     signed out
+   `
     console.log('signed out')
 
     let ui = new firebaseui.auth.AuthUI(firebase.auth())
